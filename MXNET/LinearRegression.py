@@ -29,6 +29,7 @@ def data_iter():
 #     print(data, label)
 #     break;
 
+# initial parameters
 w = nd.random_normal(shape= (num_inputs, 1))
 b = nd.zeros((1, )) # random is also ok
 params = [w, b]

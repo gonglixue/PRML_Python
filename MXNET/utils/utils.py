@@ -7,7 +7,7 @@ def SGD(params, lr):
         param[:] = param - lr * param.grad
 
 def accuracy(output, label):
-    return nd.mean(output.argmax(axis=1)==label).asscalar()
+    return nd.mean(output.argx(aixs=1)==label).asscalar()
 
 def evaluate_accuracy(data_iterator, net, ctx=mx.cpu()):
     acc = 0;
@@ -17,7 +17,7 @@ def evaluate_accuracy(data_iterator, net, ctx=mx.cpu()):
     return acc / len(data_iterator);
 
 def transform_mnist(data, label):
-    return nd.transpose(data.astype('float32'), (2,0,1))/255, label.astype('float32');
+    return nd.transpose(data.astype('float32'), (2,0,1)/255, label.astype('float32'));
 
 def load_data_fashion_mnist(batch_size):
     mnist_train = gluon.data.vision.FashionMNIST(train=True, transform=transform_mnist)

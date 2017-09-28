@@ -62,7 +62,7 @@ def cross_entropy(yhat, y):
 
 def accurancy(output, label):
     return nd.mean(output.argmax(axis=1) == label).asscalar() # output: batch_size * nums_classes
-
+# output.argmax(axis=1) 返回一个 1*10 矩阵，每个元素代表output每行最大值的列号
 def evaluate_accurancy(data_iterator, net):
     acc = 0
     for data, label in data_iterator:

@@ -44,7 +44,9 @@ for epoch in range(num_epochs):
 # Save the Model
 torch.save(linear_model.state_dict(), 'check_points/linear_model.pkl')
 
-# plot
+linear_model.eval()
+
+# test and plot
 predicted = linear_model(Variable(torch.from_numpy(x_train))).data.numpy()
 plt.plot(x_train, y_train, 'ro', label='Original data')
 plt.plot(x_train, predicted, label='Fitted line')

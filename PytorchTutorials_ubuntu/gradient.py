@@ -27,7 +27,9 @@ def grad():
     x = Variable(torch.FloatTensor([1, 2, 3]), requires_grad=False)
     B = Variable(torch.FloatTensor([2, 2]), requires_grad=True)
 
-    y = W.mv(x) + B.pow(2)
+    u = Variable(torch.FloatTensor([0, 0, 0]), requires_grad=False)
+
+    y = W.mv(x-u) + B.pow(2)
     y.backward(torch.ones(1))   # 
 
     print(W.grad)

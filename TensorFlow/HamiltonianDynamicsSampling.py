@@ -30,7 +30,7 @@ def kinetic_energy(vel):
     """
     return 0.5 * (vel ** 2).sum(axis=1)
 
-
+# compute energy
 def hamiltonian(pos, vel, energy_fn):
     """
     Returns the Hamiltonian (sum of potential and kinetic energy) for the given
@@ -430,12 +430,13 @@ def sampler_on_nd_gaussian(sampler_cls, burnin, n_samples, dim=10):
     cov_inv = numpy.linalg.inv(cov)
 
     # Define energy function for a multi-variate Gaussian
+    # potential U
     def gaussian_energy(x):
         return 0.5 * (theano.tensor.dot((x - mu), cov_inv) *
                       (x - mu)).sum(axis=1)
 
     # Declared shared random variable for positions
-    position = rng.randn(batchsize, dim).astype(theano.config.floatX)
+    position = rng.randn(batchsize, dim).astype(theano.config.floatX)   # initial position
     position = theano.shared(position)
 
     # Create HMC sampler
@@ -471,3 +472,6 @@ def test_hmc():
                sampler.target_acceptance_rate) < .1
     assert sampler.stepsize.get_value() >= sampler.stepsize_min
     assert sampler.stepsize.get_value() <= sampler.stepsize_max
+
+if __name__ == '__main__':
+    test_hmc()

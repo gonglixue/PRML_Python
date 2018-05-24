@@ -8,10 +8,10 @@ nSamples = 1000;
 L = 20;
 
 % DEFINE POTENTIAL ENERGY FUNCTION
-U = inline('transp(x)*inv([1,0;0,1])*x','x');
+U = inline('transp(x)*inv([1,0.8;0.8,1])*x','x');
 
 % DEFINE GRADIENT OF POTENTIAL ENERGY
-dU = inline('transp(x)*inv([1,0;0,1])','x');
+dU = inline('transp(x)*inv([1,0.8;0.8,1])','x');
 
 % DEFINE KINETIC ENERGY FUNCTION
 K = inline('sum((transp(p)*p))/2','p');

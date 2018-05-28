@@ -30,10 +30,75 @@ def grad():
     u = Variable(torch.FloatTensor([0, 0, 0]), requires_grad=False)
 
     y = W.mv(x-u) + B.pow(2)
-    y.backward(torch.ones(1))   # 
+    z = W.mv(x - u) + B.pow(2)
 
+    # y.backward(torch.ones(1))   #
+    #
+    # print(W.grad)
+    # print(B.grad)
+    #
+    # W.grad.data.zero_()
+    # B.grad.data.zero_()
+    #
+    # z.backward(torch.ones(1))
+    #
+    # print(W.grad)
+    # print(B.grad)
+
+    r = y + z
+    r.backward(torch.ones(1))
     print(W.grad)
     print(B.grad)
 
+def grad2():
+    W = Variable(torch.rand(2, 2), requires_grad=True)
+    W2 = Variable(torch.rand(2, 1), requires_grad=True)
+    x1 = Variable(torch.rand(1, 2), requires_grad=True)
+    x2 = Variable(torch.rand(1, 2), requires_grad=True)
+
+    print("w: ")
+    print(W)
+    print("x1: ")
+    print(x1)
+    print("x2: ")
+    print(x2)
+    print("--------------------")
+
+    y1 = torch.matmul(torch.matmul(x1, W), W2)
+    print(torch.matmul(W, W2))
+    # y = Variable(y, requires_grad=True)
+    # print("y1:")
+    # print(y1)
+
+    y1.backward()
+    # print(W.grad)
+    print(x1.grad)
+
+    # W.grad.data.zero_()
+    # x1.grad.data.zero_()
+    y2 = torch.matmul(torch.matmul(x2, W), W2)
+    y2.backward()
+    # print("y2: ")
+    # print(y2)
+    # print(W.grad)
+    print(x2.grad)
+
+def test_dimension():
+    batch_size = 3
+    dim = 2
+    x = torch.rand(batch_size, dim)
+    u = torch.rand(dim)
+
+    x = Variable(x, requires_grad=True)
+    u = Variable(u, requires_grad=True)
+    print(x)
+    print(u)
+
+    y = x - u
+    y.backward(torch.ones(x.size()))
+
+    print(y)
+    print(x.grad)
+
 if __name__ == '__main__':
-    grad()
+    test_dimension()

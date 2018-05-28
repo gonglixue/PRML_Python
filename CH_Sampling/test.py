@@ -26,5 +26,17 @@ def test3():
     temp = torch.sum(temp)
     print(temp)
 
+def test4():
+    High_D = 3
+    High_cov = np.random.rand(High_D, High_D)
+    High_cov = (High_cov + High_cov.T) / 2
+    # High_cov = np.zeros(shape=(High_D, High_D))
+    High_cov[np.arange(High_D), np.arange(High_D)] = 1.0
+    # High_Sigma = torch.from_numpy(High_cov).float()
+    mean = np.zeros(High_D)
+    np_inital_vel = np.random.multivariate_normal(mean, High_cov, 1)
+
+    print(np_inital_vel)
+
 if __name__ == '__main__':
-    test3()
+    test4()

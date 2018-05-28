@@ -4,12 +4,30 @@ from torch.autograd import Variable
 import matplotlib.pyplot as plt
 from numpy.linalg import cholesky
 
+High_D = 500
+High_mu = torch.rand(1, High_D) * 100
+for i in range(High_D):
+    High_mu[0, i] = i * 0.1 + 1
+# High_cov = np.random.rand(High_D, High_D)
+# High_cov = (High_cov + High_cov.T) / 2.0
+# High_cov[np.arange(High_D), np.arange(High_D)] = 1.0
+
+High_cov = np.zeros(shape=(High_D, High_D))
+for i in range(High_D):
+    High_cov[i, i] = (i+1) * 1.0 / High_D
+High_Sigma = torch.from_numpy(High_cov).float()
+# High_Sigma = torch.eye(High_D, High_D)
+
 def kinetic_energy(velocity):
     """
     calculate kinetic energy
     :param velocity: torch.tensor [num_samples, D_velocity]
     :return: a vector with length of num_samples
     """
+    # temp = torch.matmul(velocity.data, High_Sigma)
+    # temp = torch.matmul(temp, velocity.data.t())
+
+    # return 0.5 * torch.sum(temp)
 
     return 0.5 * torch.sum((velocity.data)**2)
 
@@ -39,7 +57,7 @@ def metropolis_hastings_accept(energy_prev, energy_next):
         true->accept
     """
     energy_diff = energy_prev - energy_next
-    energy_diff = min(1, energy_diff)
+    # print("energy:", energy_prev, "energy diff:", energy_diff)
     random_sample = torch.rand(1)[0]
     return (np.exp(energy_diff) - random_sample) >= 0
 
@@ -124,7 +142,9 @@ def hmc_move(positions, energy_fn, stepsize, n_steps):
     :param n_steps: leapfrog steps
     :return: accept(bool), final_pos(torch.tensor)
     """
-    initial_vel = torch.randn(positions.size()) # with zero mean and unit variance
+    # initial_vel = torch.randn(positions.size()) # with zero mean and unit variance
+    np_inital_vel = np.random.multivariate_normal(np.zeros(High_D), High_cov, 1)
+    initial_vel = torch.from_numpy(np_inital_vel).float()
     positions = Variable(positions, requires_grad=True)
     initial_vel = Variable(initial_vel, requires_grad=True)
 
@@ -142,10 +162,11 @@ def hmc_move(positions, energy_fn, stepsize, n_steps):
     return accept, final_pos.data
 
 def hmc_sampling(init_pos, energy_fn, n_samples, stepsize=0.01, n_steps=20, gap=20):
-    result_samples = torch.zeros(n_samples+gap, 1, 2)
+    result_samples = torch.zeros(n_samples+gap, 1, init_pos.size(1))
     # last_pos = init_pos
     # result_samples.append(init_pos)
     result_samples[0, :, :] = init_pos
+    accept_num = 0
 
     for i in range(1, n_samples+gap):
         last_pos = result_samples[i-1, :, :]
@@ -155,17 +176,29 @@ def hmc_sampling(init_pos, energy_fn, n_samples, stepsize=0.01, n_steps=20, gap=
         if accept:
             # result_samples.append([new_pos[0][0], new_pos[0][1]])
             result_samples[i, :, :] = new_pos
+            accept_num += 1
         else:
             # result_samples.append([last_pos[0][0], last_pos[0][1]])
             result_samples[i, :, :] = last_pos
 
-    return result_samples[gap:, :, :]
+    accept_rate = accept_num * 1.0 / (n_samples+gap)
+    return result_samples[gap:, :, :], accept_rate
+
+Gaussian_u = torch.rand(1, 2) * 2
+conv = np.random.rand(2, 2)
+conv = (conv + conv.T) / 2
+conv[np.arange(2), np.arange(2)] = 1.0
+Gaussian_Sigma = torch.from_numpy(conv).float()
+
 
 def NormalEnergy(x):
     # x = Variable(x, requires_grad=True)
-    u = torch.zeros(1, 2)
-    u[0, :] = torch.FloatTensor([2, 2])
-    Sigma = torch.FloatTensor([[1.0, 0.8], [0.8, 1.0]])
+    # u = torch.zeros(1, 2)
+    # u[0, :] = torch.FloatTensor([2, 2])
+    # Sigma = torch.FloatTensor([[1.0, 0.8], [0.8, 1.0]])
+    u = Gaussian_u
+    Sigma = Gaussian_Sigma
+
     Sigma = torch.inverse(Sigma)
     # Sigma = Sigma.t()
 
@@ -187,13 +220,13 @@ def grad_test():
     print(x.grad)
 
 def vis_test():
-    n_samples = 2000
+    n_samples = 1000
     stepsize = 0.1
     n_steps = 20
     dim = 2
 
     initial_pos = torch.randn(1, dim)
-    samples = hmc_sampling(initial_pos, NormalEnergy, n_samples, stepsize, n_steps)
+    samples, _ = hmc_sampling(initial_pos, NormalEnergy, n_samples, stepsize, n_steps)
     samples = samples.view(samples.size(0), -1)
     # print(torch.mean(samples, 0))
     # samples = np.array(samples)
@@ -215,22 +248,77 @@ def vis_test():
     plt.scatter(x, y, c='red', marker='+')
 
 
-    mu = np.array([2, 2])
-    Sigma = np.array([[1, 0.8], [0.8, 1]])
+    # mu = np.array([2, 2])
+    # Sigma = np.array([[1, 0.8], [0.8, 1]])
+    mu = Gaussian_u[0, :].numpy()
+    Sigma = Gaussian_Sigma.numpy()
 
     x, y = np.random.multivariate_normal(mu, Sigma, 1000).T
+    print("true mean:")
+    print(mu)
     print("true covariance:")
     s = [x, y]
     print(np.cov(s))
     plt.scatter(x, y, c='green', marker='*')
     plt.show()
 
+def high_dimension_gaussain_energy(x):
+    u = High_mu
+    Sigma = High_Sigma
+    Sigma = torch.inverse(Sigma)
 
+    if isinstance(x, Variable):
+        u = Variable(u, requires_grad=True)
+        Sigma = Variable(Sigma, requires_grad=True)
+
+    diff = x - u
+    temp = 0.5 * torch.matmul(torch.matmul(diff, Sigma), diff.t())
+
+    return temp
+
+
+def high_dimension_test():
+    n_samples = 2
+    stepsize = 0.01
+    n_steps = 150
+    dim = High_D
+    n_gap = 100
+    epoch = 1
+    total_n = epoch * n_samples
+    samples = torch.zeros(total_n, 1, High_D)
+
+    for e in range(epoch):
+        initial_pos = torch.randn(1, dim)
+        e_samples, accept_rate = hmc_sampling(initial_pos, high_dimension_gaussain_energy, n_samples, stepsize, n_steps, n_gap)
+        samples[e*n_samples:(e+1)*n_samples, :, :] = e_samples
+
+    samples = samples.view(samples.size(0), -1)
+    samples = samples.numpy()
+
+    print("samples mu:")
+    samples_mu = np.mean(samples, axis=0)
+    print(samples_mu)
+    # print("samples covariance")
+    samples_sigma = np.cov(samples.T)
+    # print(samples_sigma)
+
+    print("\ntrue mu:")
+    print(High_mu)
+    # print("true covariance:")
+    # print(High_cov)
+
+    L2_mu = ((samples_mu - High_mu.numpy())**2).mean()
+    print("L2 mu:", L2_mu)
+    L2_Sigma = ((High_Sigma.numpy() - samples_sigma)**2).mean()
+    print("L2 covariance:", L2_Sigma)
+
+    print("accept rate: ", accept_rate)
 
 
 if __name__ == '__main__':
     # grad_test()
-    vis_test()
+    # vis_test()
+    high_dimension_test()
 
 
 

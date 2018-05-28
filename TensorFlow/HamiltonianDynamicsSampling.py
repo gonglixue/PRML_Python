@@ -208,6 +208,7 @@ def hmc_move(s_rng, positions, energy_fn, stepsize, n_steps):
     # end-snippet-1 start-snippet-2
     # sample random velocity
     initial_vel = s_rng.normal(size=positions.shape)
+
     # end-snippet-2 start-snippet-3
     # perform simulation of particles subject to Hamiltonian dynamics
     final_pos, final_vel = simulate_dynamics(
@@ -330,12 +331,12 @@ class HMC_sampler(object):
         cls,
         shared_positions,
         energy_fn,
-        initial_stepsize=0.01,
+        initial_stepsize=0.5,
         target_acceptance_rate=.9,
-        n_steps=20,
+        n_steps=800,
         stepsize_dec=0.98,
-        stepsize_min=0.001,
-        stepsize_max=0.25,
+        stepsize_min=0.3,
+        stepsize_max=0.8,
         stepsize_inc=1.02,
         # used in geometric avg. 1.0 would be not moving at all
         avg_acceptance_slowness=0.9,
@@ -418,22 +419,24 @@ class HMC_sampler(object):
         return self.positions.get_value(borrow=False)
 
 def sampler_on_nd_gaussian(sampler_cls, burnin, n_samples, dim=10):
-    batchsize = 3
+    batchsize = 5
 
     rng = numpy.random.RandomState(123)
 
     # Define a covariance and mu for a gaussian
     mu = numpy.array(rng.rand(dim) * 10, dtype=theano.config.floatX)
     cov = numpy.array(rng.rand(dim, dim), dtype=theano.config.floatX)
-    cov = (cov + cov.T) / 2.
+    cov = (cov + cov.T) / 2.0
+    # cov = numpy.zeros(shape=(dim, dim))
     cov[numpy.arange(dim), numpy.arange(dim)] = 1.0
     cov_inv = numpy.linalg.inv(cov)
 
     # Define energy function for a multi-variate Gaussian
     # potential U
     def gaussian_energy(x):
-        return 0.5 * (theano.tensor.dot((x - mu), cov_inv) *
+        energy = 0.5 * (theano.tensor.dot((x - mu), cov_inv) *
                       (x - mu)).sum(axis=1)
+        return energy
 
     # Declared shared random variable for positions
     position = rng.randn(batchsize, dim).astype(theano.config.floatX)   # initial position
@@ -441,13 +444,15 @@ def sampler_on_nd_gaussian(sampler_cls, burnin, n_samples, dim=10):
 
     # Create HMC sampler
     sampler = sampler_cls(position, gaussian_energy,
-                          initial_stepsize=1e-3, stepsize_max=0.5)
+                          initial_stepsize=0.01, stepsize_max=0.8, stepsize_min=0.001,
+                          n_steps=150, stepsize_dec=0.98, stepsize_inc=1.02)
 
     # Start with a burn-in process
-    garbage = [sampler.draw() for r in range(burnin)]  # burn-in Draw
+    # garbage = [sampler.draw() for r in range(burnin)]  # burn-in Draw
     # `n_samples`: result is a 3D tensor of dim [n_samples, batchsize,
     # dim]
     _samples = numpy.asarray([sampler.draw() for r in range(n_samples)])
+    # _samples = _samples[500:]
     # Flatten to [n_samples * batchsize, dim]
     samples = _samples.T.reshape(dim, -1).T
 
@@ -455,19 +460,25 @@ def sampler_on_nd_gaussian(sampler_cls, burnin, n_samples, dim=10):
     print('target mean:', mu)
     print('target cov:\n', cov)
 
-    print('****** EMPIRICAL MEAN/COV USING HMC ******')
-    print('empirical mean: ', samples.mean(axis=0))
-    print('empirical_cov:\n', numpy.cov(samples.T))
+    print('\n****** EMPIRICAL MEAN/COV USING HMC ******')
+    samples_conv = numpy.cov(samples.T)
+    samples_mean = samples.mean(axis=0)
+    print('empirical mean: ', samples_mean)
+    print('empirical_cov:\n', samples_conv)
 
-    print('****** HMC INTERNALS ******')
+    print("L2 Error of mean: ", ((mu-samples_mean)**2).mean())
+    print("L2 Error of cov: ", ((cov - samples_conv)**2).mean())
+
+    print('\n****** HMC INTERNALS ******')
     print('final stepsize', sampler.stepsize.get_value())
     print('final acceptance_rate', sampler.avg_acceptance_rate.get_value())
+    print('target_acceptance_rate: ', sampler.target_acceptance_rate)
 
     return sampler
 
 def test_hmc():
     sampler = sampler_on_nd_gaussian(HMC_sampler.new_from_shared_positions,
-                                     burnin=1000, n_samples=1000, dim=2)
+                                     burnin=1000, n_samples=1000, dim=8)
     assert abs(sampler.avg_acceptance_rate.get_value() -
                sampler.target_acceptance_rate) < .1
     assert sampler.stepsize.get_value() >= sampler.stepsize_min

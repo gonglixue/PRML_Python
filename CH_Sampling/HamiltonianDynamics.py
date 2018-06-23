@@ -43,6 +43,7 @@ def hamiltonian(pos, vel, energy_fn):
     U = energy_fn(pos)
     U = U.data[0][0]
     K = kinetic_energy(vel)
+    print("U:", U, "K:", K)
     return U + K
 
 
@@ -103,7 +104,7 @@ def simulate_dynamic(initial_pos, initial_vel, stepsize, n_steps, energy_fn):
     # initial_pos = Variable(initial_pos, requires_grad=True)
     # initial_vel = Variable(initial_vel, requires_grad=False)
 
-    initial_potential = energy_fn(initial_pos)
+    initial_potential = energy_fn(initial_pos)  # batch_size, dim
     initial_potential.backward()
     dE_dpos = initial_pos.grad
     vel_half_step = initial_vel - 0.5 * stepsize * dE_dpos
@@ -136,7 +137,7 @@ def hmc_move(positions, energy_fn, stepsize, n_steps):
     1. Start by sampling a random velocity from a Gaussian.
     2. Perform n_steps leapfrog
     3. decide whether to accept or reject
-    :param positions: start sampling from positions
+    :param positions: start sampling from positions. [batch_size, dim]
     :param energy_fn: potential energy function
     :param stepsize: leapfrog stepsize
     :param n_steps: leapfrog steps
@@ -278,11 +279,11 @@ def high_dimension_gaussain_energy(x):
 
 
 def high_dimension_test():
-    n_samples = 2
+    n_samples = 100
     stepsize = 0.01
     n_steps = 150
     dim = High_D
-    n_gap = 100
+    n_gap = 10
     epoch = 1
     total_n = epoch * n_samples
     samples = torch.zeros(total_n, 1, High_D)

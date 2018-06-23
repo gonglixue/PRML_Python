@@ -87,18 +87,23 @@ def test_dimension():
     batch_size = 3
     dim = 2
     x = torch.rand(batch_size, dim)
-    u = torch.rand(dim)
+    u = torch.zeros(dim)
+    W = torch.rand(dim, dim)
 
     x = Variable(x, requires_grad=True)
     u = Variable(u, requires_grad=True)
+    W = Variable(W, requires_grad=True)
     print(x)
     print(u)
+    print(W)
 
-    y = x - u
-    y.backward(torch.ones(x.size()))
-
-    print(y)
+    temp = x - u
+    y = torch.matmul(torch.matmul(temp, W), torch.sum(temp.t(), dim=1, keepdim=True))
+    y.backward(torch.ones(batch_size, dim))
+    print('--------')
+    # print(y)
     print(x.grad)
+    print(torch.matmul(x, W))
 
 if __name__ == '__main__':
     test_dimension()

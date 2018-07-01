@@ -1,0 +1,29 @@
+## pad
+原型:tf.pad(tensor, paddings, mode='CONSTANT', name=None)
+* paddings: N*2的列表，N是维度（常见2维）
+* mode='CONSTANT'表示补0，haiyou'REFLECT', 'SYMMETRIC'
+例如对于张量[[2,3,4],[5,6,7]]
+paddings=[[1,1],[2,2]]
+其中paddings[0]:[1,1]表示第0维前面补一个0，后面补一个0
+paddings[1]:[2,2]表示第1维前面补两个0，后面补两个0.
+所以得到：
+0 0 0 0 0 0 0
+0 0 2 3 4 0 0
+0 0 5 6 7 0 0 
+0 0 0 0 0 0 0
+
+## name_scope
+1. tf.name_scope()结合tf.Variable()
+方便参数命名管理。在不同命名空间的Variable可以有相同的名字。
+若重复使用`with tf.name_scope(name) as scope`则会生成其他命名空间（加上一个后缀`_数字`
+
+2. tf.variable_scope()结合tf.get_variable()来使用
+实现变量共享。
+```buildoutcfg
+with tf.variable_scope('v_scope') as scope1:
+    weight1 = tf.get_variable('weight', shape=[2,3])
+
+with tf.variable_scope('v_scope', reuse=True) as scope2:
+    weight2 = tf.get_variable('weight')
+```
+在scope2中，需要访问一个已经定义过的变量，reuse要设为True. 这时weight1 weight2指向是同一个内存对象

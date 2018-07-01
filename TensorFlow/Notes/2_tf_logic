@@ -1,0 +1,14 @@
+#运作方式
+
+## 构建图表Build the Graph
+1. inference(): 构建图表
+2. loss(): 往图标中添加loss所需要的op
+3. training(): 往损失图标中添加计算并应用梯度(gradient)所需要的操作
+
+## inference
+尽可能地构建图表，做到返回包含了预测结果的Tensor
+
+每一层创建于一个唯一的tf.name_scope下，创建于该作用域之下的所有元素都带有其前缀
+with tf.name_scope
+
+每一层的权重，都由tf.Variable实例生成

@@ -22,7 +22,7 @@ trainer = gluon.Trainer(net.collect_params(), 'sgd', {'learning_rate': 0.5})
 
 for epoch in range(5):
     train_loss = 0
-    train_acc = 0
+    train_accp = 0
     for data, label in train_data:
         with autograd.record():
             output = net(data)

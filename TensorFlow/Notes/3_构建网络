@@ -1,0 +1,26 @@
+#构建神经网络
+
+### 添加层 def add_layer()
+定义一个添加层的函数，可以很容易地为之后的添加省下不少时间.
+一个简单的MLP添加层函数
+```python
+import tensorflow as tf
+def add_layer(inputs, in_size, out_size, activations_fun=None):
+    Weights = tf.Variable(tf.random_normal([in_size, out_size]))
+    biases = tf.Variable(tf.zeros([1, out_size]) + 0.1) # bias的值推荐不为零
+    Wx_plus_b = tf.matmul(inputs, Weights) + biases
+    
+    if activations_fun is None:
+        outputs = Wx_plus_b
+    else:
+        outputs = activations_fun(Wx_plus_b)
+        
+    return outputs
+
+```
+
+### 构造神经网络
+add_layer()返回的东西其实不是计算结果，可以理解为返回的是一个进行改层计算的op
+见`construct_mlp.py`
+
+### tensorboard

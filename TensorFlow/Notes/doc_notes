@@ -21,7 +21,7 @@ paddings[1]:[2,2]表示第1维前面补两个0，后面补两个0.
 实现变量共享。
 ```buildoutcfg
 with tf.variable_scope('v_scope') as scope1:
-    weight1 = tf.get_variable('weight', shape=[2,3])
+    weight1 = tf.get_variable('weight', shape=[2,3])    #原来没有定义过这个名字，就定义一个'weight'变量
 
 with tf.variable_scope('v_scope', reuse=True) as scope2:
     weight2 = tf.get_variable('weight')

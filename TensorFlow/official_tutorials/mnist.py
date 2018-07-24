@@ -112,9 +112,9 @@ def main(_):
 
     with tf.name_scope('loss'):
         cross_entropy = tf.nn.softmax_cross_entropy_with_logits(labels=y_, logits=y_conv)
-        # logits是做softmax前的输出值。softmax_cross_entropy_with_logits会对logits做softmax
-        # 所以网络里不需要softmax
-        # softmax_cross_entropy: 返回的是一个向量, 每个元素是y_i^ * log(y_i). reduce_sum之后才是交叉熵
+        # logits is the output value without softmax.  `softmax_cross_entropy_with_logits` will apply softmax to logits
+        # so there should not be softmax in the output layer
+        # softmax_cross_entropy: return a vector. each element is y_i^ * log(y_i). it is not cross entropy until perform `reduce_sum`
 
     cross_entropy = tf.reduce_mean(cross_entropy)
 
@@ -141,6 +141,8 @@ def main(_):
                     x:batch[0], y_:batch[1], keep_prob: 1.0
                 })
                 print('step %d: training acc %g' % (i, train_accuracy))
+
+            sess.run(train_step, feed_dict={x:batch[0], y_:batch[1], keep_prob:0.5})
 
         print('test acc %g' % (accuracy.eval(feed_dict={
             x:mnist.test.images, y_:mnist.test.labels, keep_prob: 1.0

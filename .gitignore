@@ -5,3 +5,5 @@ test/
 *.DESKTOP-GH4O7H3
 *.gz
 *.csv
+events.*
+*.h5

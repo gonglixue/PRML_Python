@@ -38,11 +38,18 @@ class FlowerClassifier():
         train_target = keras.utils.to_categorical(train_target, num_classes=3)
         test_target = keras.utils.to_categorical(test_target, num_classes=3)
 
+        callbacks = [
+            keras.callbacks.TensorBoard(log_dir="iris_log", histogram_freq=0, write_grads=True, write_images=False),
+            keras.callbacks.ModelCheckpoint("./iris_ckpt", save_weights_only=True, verbose=0)
+        ]
+
         optimizer = keras.optimizers.SGD(lr=learning_rate, momentum=momentum)
         self.keras_model.compile(optimizer=optimizer, loss='categorical_crossentropy', metrics=['accuracy'])
 
-        self.keras_model.fit(train_data, train_target, batch_size=batch_size, epochs=epochs)
+        self.keras_model.fit(train_data, train_target, batch_size=batch_size, epochs=epochs, callbacks=callbacks)
         score = self.keras_model.evaluate(test_data, test_target, batch_size=batch_size)
+        test_predict = self.keras_model.predict(test_data)
+        print(np.argmax(test_predict, axis=1))
 
 def test():
     training_set = tf.contrib.learn.datasets.base.load_csv_with_header(
@@ -58,5 +65,5 @@ def test():
 
 if __name__ == '__main__':
     Classifier = FlowerClassifier()
-    Classifier.train(learning_rate=0.01, momentum=0.9, batch_size=32, epochs=50,
-                     train_set_csv_path='../../iris_test.csv', val_set_csv_path='../../iris_training.csv')
+    Classifier.train(learning_rate=0.005, momentum=0.9, batch_size=32, epochs=50,
+                     train_set_csv_path='../../iris_training.csv', val_set_csv_path='../../iris_test.csv')

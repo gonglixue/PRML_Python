@@ -72,6 +72,14 @@ class FlowerClassifier():
 
         print("%s: %.2f" % (self.keras_model.metrics_names[1], scores[1]))
 
+    def info(self, ckpt_path):
+        self.keras_model.load_weights(ckpt_path)
+        self.keras_model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
+
+        for layer in self.keras_model.layers:
+            w = layer.get_weights()
+            input_node = layer.input
+
 
 def test():
     training_set = tf.contrib.learn.datasets.base.load_csv_with_header(
@@ -88,8 +96,13 @@ def test():
 if __name__ == '__main__':
     Classifier = FlowerClassifier()
 
-    if sys.argv[1] == 'train':
-        Classifier.train(learning_rate=0.005, momentum=0.9, batch_size=32, epochs=50,
-                         train_set_csv_path='../../iris_training.csv')
-    elif sys.argv[1] == 'test':
-        Classifier.inference(test_set_csv_path='/home/gonglixue/PycharmProjects/PRML_Python/iris_test.csv', ckpt_path='/home/gonglixue/PycharmProjects/PRML_Python/TensorFlow/keras_official_tutorials/checkpoints/iris-ckpt-best.hdf5')
+    if len(sys.argv) > 1:
+        if sys.argv[1] == 'train':
+            Classifier.train(learning_rate=0.005, momentum=0.9, batch_size=32, epochs=50,
+                             train_set_csv_path='../../iris_training.csv')
+        elif sys.argv[1] == 'test':
+            Classifier.inference(test_set_csv_path='/home/gonglixue/PycharmProjects/PRML_Python/iris_test.csv', ckpt_path='/home/gonglixue/PycharmProjects/PRML_Python/TensorFlow/keras_official_tutorials/checkpoints/iris-ckpt-best.hdf5')
+
+    else:
+        Classifier.info(ckpt_path='/home/gonglixue/PycharmProjects/PRML_Python/TensorFlow/keras_official_tutorials/checkpoints/iris-ckpt-best.hdf5')
+

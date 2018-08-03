@@ -1,3 +1,5 @@
+import os
+
 import tensorflow as tf
 from tensorflow import keras
 import numpy as np
@@ -18,7 +20,10 @@ class FlowerClassifier():
         model = keras.models.Model(inputs=inputs, outputs=predictions)
         return model
 
-    def train(self, learning_rate, momentum, batch_size, epochs, train_set_csv_path, val_set_csv_path):
+    def train(self, learning_rate, momentum, batch_size, epochs, train_set_csv_path, val_set_csv_path, ckpt_dir='checkpoints'):
+        if not os.path.exists(ckpt_dir):
+            os.mkdir(ckpt_dir)
+
         training_set = tf.contrib.learn.datasets.base.load_csv_with_header(
             filename=train_set_csv_path,
             target_dtype=np.int,
@@ -38,18 +43,24 @@ class FlowerClassifier():
         train_target = keras.utils.to_categorical(train_target, num_classes=3)
         test_target = keras.utils.to_categorical(test_target, num_classes=3)
 
+        ckpt_file_path = os.path.join(ckpt_dir, "ckpt-improve-{epoch:02d}-{acc:.2f}.hdf5")
+
         callbacks = [
             keras.callbacks.TensorBoard(log_dir="iris_log", histogram_freq=0, write_grads=True, write_images=False),
-            keras.callbacks.ModelCheckpoint("./iris_ckpt", save_weights_only=True, verbose=0)
+            keras.callbacks.ModelCheckpoint(ckpt_file_path, monitor='acc',
+                                            save_weights_only=True, save_best_only=True, verbose=1)  # val_loss, val_acc, loss
         ]
 
         optimizer = keras.optimizers.SGD(lr=learning_rate, momentum=momentum)
         self.keras_model.compile(optimizer=optimizer, loss='categorical_crossentropy', metrics=['accuracy'])
 
-        self.keras_model.fit(train_data, train_target, batch_size=batch_size, epochs=epochs, callbacks=callbacks)
-        score = self.keras_model.evaluate(test_data, test_target, batch_size=batch_size)
-        test_predict = self.keras_model.predict(test_data)
-        print(np.argmax(test_predict, axis=1))
+        # self.keras_model.fit(train_data, train_target, validation_data=(test_data, test_target), batch_size=batch_size,
+        #                      epochs=epochs, callbacks=callbacks)
+        self.keras_model.fit(train_data, train_target, batch_size=batch_size,
+                             epochs=epochs, callbacks=callbacks)
+        # score = self.keras_model.evaluate(test_data, test_target, batch_size=batch_size)
+        # test_predict = self.keras_model.predict(test_data)
+        # print(np.argmax(test_predict, axis=1))
 
 def test():
     training_set = tf.contrib.learn.datasets.base.load_csv_with_header(

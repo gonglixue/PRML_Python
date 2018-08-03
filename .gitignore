@@ -6,4 +6,4 @@ test/
 *.gz
 *.csv
 events.*
-*.h5
+*.hdf5

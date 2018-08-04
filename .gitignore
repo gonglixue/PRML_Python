@@ -7,3 +7,4 @@ test/
 *.csv
 events.*
 *.hdf5
+*.h5

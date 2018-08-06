@@ -73,7 +73,7 @@ class VGG_cifar():
             X_test = (X_test - mean) / (std + 1e-7)
             return X_train, X_test
 
-    def train(self, batch_size=64, learning_rate=0.005, lr_decay=1e-6, epochs=20, ckpt_dir="./cifar10_checkpoints"):
+    def train(self, batch_size=64, learning_rate=0.005, lr_decay=1e-6, epochs=20, ckpt_dir="./cifar10_checkpoints", log_dir="./cifar10_log"):
         if not os.path.exists(ckpt_dir):
             os.mkdir(ckpt_dir)
 
@@ -107,7 +107,7 @@ class VGG_cifar():
         def lr_scheduler(epoch):
             return learning_rate * (0.5 ** (epoch // lr_drop))
         reduce_lr_callback = keras.callbacks.LearningRateScheduler(lr_scheduler)
-        tensorboard_callback = keras.callbacks.TensorBoard(log_dir='cifar10_log', histogram_freq=0, write_grads=True, write_images=True)
+        tensorboard_callback = keras.callbacks.TensorBoard(log_dir=log_dir, histogram_freq=0, write_grads=True, write_images=True)
         ckpt_file_path = os.path.join(ckpt_dir, "cifar-ckpt-improve-{epoch:02d}-{loss:.2f}.hdf5")
         ckpt_callback = keras.callbacks.ModelCheckpoint(ckpt_file_path, monitor='loss',
                                                         save_weights_only=True, save_best_only=True, verbose=1)
@@ -123,4 +123,4 @@ class VGG_cifar():
 
 if __name__ == '__main__':
     classifier = VGG_cifar(10, True)
-    classifier.train()
+    classifier.train(ckpt_dir="cifar10_customloss_ckpt", log_dir="cifar10_customloss_log")

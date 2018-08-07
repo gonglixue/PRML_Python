@@ -3,3 +3,5 @@ test/
 *.png
 *.pkl
 *.DESKTOP-GH4O7H3
+*.gz
+*.idx3-ubyte

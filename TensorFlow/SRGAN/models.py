@@ -63,6 +63,13 @@ class SRGAN():
 
             return x
 
+        def deconv_block(layer_input, id):
+            deconv = keras.layers.Conv2DTranspose(64, 3, 2, padding='same', name="gen_deconv{}".format(id))(layer_input)
+            deconv = keras.layers.Activation('relu')(deconv)
+
+            return deconv
+
+
         input_low_res = keras.layers.Input(shape=self.lr_shape)
 
         # stage before residual blocks
@@ -77,6 +84,16 @@ class SRGAN():
         # stage after residual blocks
         stage2 = keras.layers.Conv2D(64, 3, 1, padding='same', name="gen_post_conv")(res_output)
         stage2 = keras.layers.BatchNormalization(momentum=0.8, name="gen_post_bn")(stage2)
+        stage2 = keras.layers.Add()[stage1, stage2]
 
+        # upsampling twice
+        up_1 = deconv_block(stage2, 0)
+        up_2 = deconv_block(up_1, 1)
+
+        # final
+        final = keras.layers.Conv2D(3, 9, 1, padding='same', name='gen_output_conv')(up_2)
+        final = keras.layers.Activation('tanh')(final)
+
+        return keras.models.Model(input_low_res, final)
 
 

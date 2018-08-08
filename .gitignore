@@ -5,8 +5,10 @@ test/
 *.DESKTOP-GH4O7H3
 *.gz
 *.idx3-ubyte
+*.idx1-ubyte
+*-ubyte
 *.csv
 events.*
 *.hdf5
 *.h5
-
+*.pyc
